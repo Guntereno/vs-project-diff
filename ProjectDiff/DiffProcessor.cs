@@ -60,15 +60,19 @@ namespace ProjectDiff
                     var leftStrs = (List<string>)((FieldInfo)memberInfo).GetValue(left);
                     var rightStrs = (List<string>)((FieldInfo)memberInfo).GetValue(right);
 
-                    diff.Diffs[memberInfo.Name] = CreateDiff(leftStrs, rightStrs);
+                    if((leftStrs != null) && (rightStrs != null))
+                    {
+                        diff.Diffs[memberInfo.Name] = CreateDiff(leftStrs, rightStrs);
+                    }
                 }
             }
 
             return diff;
         }
 
-        private StringsDiff CreateDiff(List<string> left, List<string> right, bool ignoreCase = false)
+        private StringsDiff CreateDiff(List<string> left, List<string> right)
         {
+            bool ignoreCase = ((_config.Globals.Paths & PathOperations.IgnoreCase) != 0);
             StringComparer cmp = ignoreCase ?
                     StringComparer.OrdinalIgnoreCase :
                     StringComparer.Ordinal;
@@ -79,19 +83,19 @@ namespace ProjectDiff
 
             if((_config.Globals.Ignore & IgnoreFlags.Left) == 0)
             {
-                diff.Left = leftSet.Except(rightSet).ToList();
+                diff.Left = leftSet.Except(rightSet, cmp).ToList();
                 diff.Left.Sort();
             }
 
             if ((_config.Globals.Ignore & IgnoreFlags.Both) == 0)
             {
-                diff.Both = leftSet.Intersect(rightSet).ToList();
+                diff.Both = leftSet.Intersect(rightSet, cmp).ToList();
                 diff.Both.Sort();
             }
 
             if ((_config.Globals.Ignore & IgnoreFlags.Right) == 0)
             {
-                diff.Right = rightSet.Except(leftSet).ToList();
+                diff.Right = rightSet.Except(leftSet, cmp).ToList();
                 diff.Right.Sort();
             }
 

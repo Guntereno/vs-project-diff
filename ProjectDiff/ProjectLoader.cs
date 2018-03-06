@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Xml;
 
@@ -39,6 +40,16 @@ namespace ProjectDiff
 
             _result.Path = path;
 
+            LoadGlobals(doc);
+            LoadTargets(doc);
+            LoadIncludes(doc);
+            LoadSource(doc);
+
+            Result = _result;
+        }
+
+        private void LoadGlobals(XmlDocument doc)
+        {
             var globalsNode = doc.SelectSingleNode("//msb:Project/msb:PropertyGroup[@Label='Globals']", _nsMan);
             if (globalsNode != null)
             {
@@ -49,7 +60,10 @@ namespace ProjectDiff
                     _result.Globals[childNode.Name] = globalsNode.ChildNodes[i].InnerText;
                 }
             }
+        }
 
+        private void LoadTargets(XmlDocument doc)
+        {
             var itemDefinitionGroups = doc.SelectNodes("//msb:Project/msb:ItemDefinitionGroup", _nsMan);
             if (itemDefinitionGroups != null)
             {
@@ -60,12 +74,122 @@ namespace ProjectDiff
                     _result.Targets.Add(LoadTarget(childNode));
                 }
             }
-
-            Result = _result;
         }
+
+        private void LoadIncludes(XmlDocument doc)
+        {
+            string nodeXpath = "//msb:Project/msb:ItemGroup/msb:ClCompile";
+            string memberName = "Source";
+
+            LoadFiles(doc, memberName, nodeXpath);
+        }
+
+        private void LoadSource(XmlDocument doc)
+        {
+            string nodeXpath = "//msb:Project/msb:ItemGroup/msb:ClInclude";
+            string memberName = "Includes";
+
+            LoadFiles(doc, memberName, nodeXpath);
+        }
+
+        private void LoadFiles(XmlDocument doc, string memberName, string nodeXpath)
+        {
+            Type targetModelT = typeof(TargetModel);
+            FieldInfo listFieldInfo = targetModelT.GetField(
+                memberName,
+                BindingFlags.Public | BindingFlags.Instance);
+
+            foreach (TargetModel target in _result.Targets)
+            {
+                listFieldInfo.SetValue(target, new List<string>());
+            }
+
+            var includes = doc.SelectNodes(nodeXpath, _nsMan);
+            if (includes != null)
+            {
+                for (int i = 0; i < includes.Count; i++)
+                {
+                    XmlNode includeNode = includes[i];
+                    string path = includeNode.Attributes["Include"].Value;
+                    var exclusions = includeNode.SelectNodes("/msb:ExcludedFromBuild", _nsMan);
+
+                    foreach (TargetModel target in _result.Targets)
+                    {
+                        bool excluded = false;
+                        if (exclusions != null)
+                        {
+                            foreach (XmlNode exclusion in exclusions)
+                            {
+                                string condition = exclusion.Attributes["condition"].Value;
+                                TargetDef targetDef = GetTargetDefFromCondition(condition);
+                                if (targetDef == target.TargetDef)
+                                {
+                                    excluded = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (!excluded)
+                        {
+                            path = ResolveFilePath(path);
+                            var values = listFieldInfo.GetValue(target) as List<string>;
+                            values.Add(path);
+                        }
+                    }
+                }
+            }
+        }
+
+        /*
+        private void LoadIncludes(XmlDocument doc)
+        {
+            foreach (TargetModel target in _result.Targets)
+            {
+                target.Includes = new List<string>();
+            }
+
+            var includes = doc.SelectNodes("//msb:Project/msb:ItemGroup/msb:ClInclude", _nsMan);
+            if (includes != null)
+            {
+                for (int i = 0; i < includes.Count; i++)
+                {
+                    XmlNode includeNode = includes[i];
+                    string path = includeNode.Attributes["Include"].Value;
+                    var exclusions = includeNode.SelectNodes("/msb:ExcludedFromBuild", _nsMan);
+
+                    foreach (TargetModel target in _result.Targets)
+                    {
+                        bool excluded = false;
+                        if (exclusions != null)
+                        {
+                            foreach (XmlNode exclusion in exclusions)
+                            {
+                                string condition = exclusion.Attributes["condition"].Value;
+                                TargetDef targetDef = GetTargetDefFromCondition(condition);
+                                if (targetDef == target.TargetDef)
+                                {
+                                    excluded = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (!excluded)
+                        {
+                            path = ResolveFilePath(path);
+                            target.Includes.Add(path);
+                        }
+                    }
+                }
+            }
+        }
+        */
 
         private string ResolveFilePath(string input)
         {
+            input = input.Trim();
+
             if((_globalConfig.Paths & PathOperations.ResolveMacros) != 0)
             {
                 input = ResolveMacros(input);
@@ -124,21 +248,9 @@ namespace ProjectDiff
         {
             TargetModel result = new TargetModel();
 
-            string condition = itemDefGroupNode.Attributes["Condition"].InnerText;
-
             // Get the configuration and platform from the condition
-            const string kPattern = @"^'\$\(Configuration\)\|\$\(Platform\)'=='(.*)\|(.*)'$";
-            var regex = new Regex(kPattern);
-            Match match = regex.Match(condition);
-            if (match.Success && (match.Groups.Count == 3))
-            {
-                result.Configuration = match.Groups[1].Value;
-                result.Platform = match.Groups[2].Value;
-            }
-            else
-            {
-                throw new Exception("Invalid Condition in ItemDefinitionGroup!: " + condition);
-            }
+            string condition = itemDefGroupNode.Attributes["Condition"].Value;
+            result.TargetDef = GetTargetDefFromCondition(condition);
 
             result.PreprocessorDefinitions = BuildListFromNode(itemDefGroupNode, "msb:ClCompile/msb:PreprocessorDefinitions");
             result.AdditionalIncludeDirectories = BuildListFromNode(
@@ -153,6 +265,26 @@ namespace ProjectDiff
 
             return result;
         }
+
+        TargetDef GetTargetDefFromCondition(string condition)
+        {
+            // Get the configuration and platform from the condition
+            const string kPattern = @"^'\$\(Configuration\)\|\$\(Platform\)'=='(.*)\|(.*)'$";
+            var regex = new Regex(kPattern);
+            Match match = regex.Match(condition);
+            if (match.Success && (match.Groups.Count == 3))
+            {
+                var target = new TargetDef();
+                target.Config = match.Groups[1].Value;
+                target.Platform = match.Groups[2].Value;
+                return target;
+            }
+            else
+            {
+                throw new Exception("Invalid Condition in ItemDefinitionGroup!: " + condition);
+            }
+        }
+
 
         private List<string> BuildListFromNode(XmlNode itemDefGroupNode, String xPath, ProcessString process = null)
         {

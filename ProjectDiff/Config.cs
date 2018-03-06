@@ -15,7 +15,8 @@ namespace ProjectDiff
     public enum PathOperations
     {
         MakeAbsolute = 1 << 0,
-        ResolveMacros = 1 << 1
+        ResolveMacros = 1 << 1,
+        IgnoreCase = 1 << 2
     }
 
     public class Target

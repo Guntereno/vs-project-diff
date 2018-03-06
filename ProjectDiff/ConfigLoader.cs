@@ -45,14 +45,20 @@ namespace ProjectDiff
             if (ignoreNode != null)
             {
                 string flags = ignoreNode.InnerText;
-                global.Ignore = (IgnoreFlags)Enum.Parse(typeof(IgnoreFlags), flags);
+                if(!string.IsNullOrEmpty(flags))
+                {
+                    global.Ignore = (IgnoreFlags)Enum.Parse(typeof(IgnoreFlags), flags);
+                }
             }
 
             XmlNode pathsNode = globalsNode.SelectSingleNode("//PathOperations");
             if (pathsNode != null)
             {
                 string flags = pathsNode.InnerText;
-                global.Paths = (PathOperations)Enum.Parse(typeof(PathOperations), flags);
+                if(!string.IsNullOrEmpty(flags))
+                {
+                    global.Paths = (PathOperations)Enum.Parse(typeof(PathOperations), flags);
+                }
             }
 
             return global;
