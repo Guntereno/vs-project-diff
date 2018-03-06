@@ -21,7 +21,7 @@ namespace ProjectDiff
             {
                 foreach (var val in list)
                 {
-                    Console.WriteLine(" - " + val);
+                    Console.WriteLine("  - `" + val + "`");
                 }
                 Console.WriteLine();
             }
@@ -32,6 +32,11 @@ namespace ProjectDiff
             foreach (TargetDiff targetDiff in diff.Targets)
             {
                 OutputHeader(1, targetDiff.Name);
+
+                Console.WriteLine("- _left_: `" + targetDiff.Left + "`");
+                Console.WriteLine("- _right_: `" + targetDiff.Right + "`");
+                Console.WriteLine();
+
                 OutputTargetDiff(targetDiff);
             }
         }

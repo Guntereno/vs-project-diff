@@ -2,7 +2,7 @@
 
 namespace ProjectDiff
 {
-    class TargetDef
+    public class TargetDef
     {
         public string Config;
         public string Platform;

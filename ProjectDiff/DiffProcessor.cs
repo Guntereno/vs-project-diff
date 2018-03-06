@@ -35,6 +35,8 @@ namespace ProjectDiff
 
                 var diff = CreateDiff(leftTarget, rightTarget);
                 diff.Name = mapping.Name;
+                diff.Left = new TargetId(mapping.Left.ProjectPath, mapping.Left.Config, mapping.Left.Platform);
+                diff.Right = new TargetId(mapping.Right.ProjectPath, mapping.Right.Config, mapping.Right.Platform);
                 result.Targets.Add(diff);
             }
 
