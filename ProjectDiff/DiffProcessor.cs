@@ -19,7 +19,7 @@ namespace ProjectDiff
         {
             _config = config;
 
-            var projects = new ProjectFileCache();
+            var projects = new ProjectFileCache(_config.Globals);
 
             var result = new Diff();
 
@@ -77,19 +77,19 @@ namespace ProjectDiff
 
             var diff = new StringsDiff();
 
-            if((_config.Ignore & IgnoreFlags.Left) == 0)
+            if((_config.Globals.Ignore & IgnoreFlags.Left) == 0)
             {
                 diff.Left = leftSet.Except(rightSet).ToList();
                 diff.Left.Sort();
             }
 
-            if ((_config.Ignore & IgnoreFlags.Both) == 0)
+            if ((_config.Globals.Ignore & IgnoreFlags.Both) == 0)
             {
                 diff.Both = leftSet.Intersect(rightSet).ToList();
                 diff.Both.Sort();
             }
 
-            if ((_config.Ignore & IgnoreFlags.Right) == 0)
+            if ((_config.Globals.Ignore & IgnoreFlags.Right) == 0)
             {
                 diff.Right = rightSet.Except(leftSet).ToList();
                 diff.Right.Sort();

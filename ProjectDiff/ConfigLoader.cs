@@ -31,14 +31,31 @@ namespace ProjectDiff
                 }
             }
 
-            XmlNode ignoreNode = doc.SelectSingleNode("//Global/Ignore");
-            if(ignoreNode != null)
-            {
-                string flags = ignoreNode.InnerText;
-                config.Ignore = (IgnoreFlags)Enum.Parse(typeof(IgnoreFlags), flags);
-            }
+            XmlNode globalsNode = doc.SelectSingleNode("//Global");
+            config.Globals = LoadGlobalConfig(globalsNode);
 
             Result = config;
+        }
+
+        private GlobalConfig LoadGlobalConfig(XmlNode globalsNode)
+        {
+            GlobalConfig global = new GlobalConfig();
+
+            XmlNode ignoreNode = globalsNode.SelectSingleNode("//Ignore");
+            if (ignoreNode != null)
+            {
+                string flags = ignoreNode.InnerText;
+                global.Ignore = (IgnoreFlags)Enum.Parse(typeof(IgnoreFlags), flags);
+            }
+
+            XmlNode pathsNode = globalsNode.SelectSingleNode("//PathOperations");
+            if (pathsNode != null)
+            {
+                string flags = pathsNode.InnerText;
+                global.Paths = (PathOperations)Enum.Parse(typeof(PathOperations), flags);
+            }
+
+            return global;
         }
 
         private Mapping LoadMapping(XmlNode mappingNode)

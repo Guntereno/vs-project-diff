@@ -15,14 +15,17 @@ namespace ProjectDiff
             private set;
         }
 
+        private GlobalConfig _globalConfig;
         private XmlNamespaceManager _nsMan;
         private FileInfo _projectFileInfo;
         private ProjectFileModel _result;
 
         private delegate string ProcessString(string input);
 
-        public ProjectLoader(string path)
+        public ProjectLoader(string path, GlobalConfig globalConfig)
         {
+            _globalConfig = globalConfig;
+
             _projectFileInfo = new FileInfo(path);
 
             XmlDocument doc = new XmlDocument();
@@ -63,7 +66,16 @@ namespace ProjectDiff
 
         private string ResolveFilePath(string input)
         {
-            //return BuildAbsolutePath(ResolveMacros(input));
+            if((_globalConfig.Paths & PathOperations.ResolveMacros) != 0)
+            {
+                input = ResolveMacros(input);
+            }
+
+            if ((_globalConfig.Paths & PathOperations.MakeAbsolute) != 0)
+            {
+                input = BuildAbsolutePath(input);
+            }
+
             return input;
         }
 

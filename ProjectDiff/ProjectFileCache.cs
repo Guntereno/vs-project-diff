@@ -5,9 +5,12 @@ namespace ProjectDiff
 {
     class ProjectFileCache
     {
-        public ProjectFileCache()
+        private GlobalConfig _globalConfig;
+
+        public ProjectFileCache(GlobalConfig globalConfig)
         {
             _projectDict = new Dictionary<string, ProjectFileModel>();
+            _globalConfig = globalConfig;
         }
 
         public ProjectFileModel this[string path]
@@ -17,7 +20,7 @@ namespace ProjectDiff
                 string absPath = Path.GetFullPath(path);
                 if(!_projectDict.ContainsKey(absPath))
                 {
-                    var loader = new ProjectLoader(absPath);
+                    var loader = new ProjectLoader(absPath, _globalConfig);
                     _projectDict.Add(absPath, loader.Result);
                 }
                 return _projectDict[absPath];

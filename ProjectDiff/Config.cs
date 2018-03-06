@@ -11,6 +11,13 @@ namespace ProjectDiff
         Both = 1 << 2
     }
 
+    [Flags]
+    public enum PathOperations
+    {
+        MakeAbsolute = 1 << 0,
+        ResolveMacros = 1 << 1
+    }
+
     public class Target
     {
         public string ProjectPath;
@@ -25,9 +32,15 @@ namespace ProjectDiff
         public Target Right;
     }
 
+    public class GlobalConfig
+    {
+        public IgnoreFlags Ignore;
+        public PathOperations Paths;
+    }
+
     public class Config
     {
         public List<Mapping> Mappings;
-        public IgnoreFlags Ignore;
+        public GlobalConfig Globals;
     }
 }
