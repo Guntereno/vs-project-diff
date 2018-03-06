@@ -14,7 +14,7 @@ namespace ProjectDiff
 
             var config = new ConfigLoader(kConfigPath);
             var diff = new DiffProcessor(config.Result);
-            var diffLogger = new DiffLogger(diff.Result, true);
+            var diffLogger = new DiffLogger(diff.Result);
         }
     }
 }

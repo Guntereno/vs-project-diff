@@ -13,8 +13,12 @@ namespace ProjectDiff
             private set;
         }
 
+        private Config _config;
+
         public DiffProcessor(Config config)
         {
+            _config = config;
+
             var projects = new ProjectFileCache();
 
             var result = new Diff();
@@ -72,14 +76,24 @@ namespace ProjectDiff
             var rightSet = new HashSet<string>(right, cmp);
 
             var diff = new StringsDiff();
-            diff.Left = leftSet.Except(rightSet).ToList();
-            diff.Left.Sort();
 
-            diff.Both = leftSet.Intersect(rightSet).ToList();
-            diff.Both.Sort();
+            if((_config.Ignore & IgnoreFlags.Left) == 0)
+            {
+                diff.Left = leftSet.Except(rightSet).ToList();
+                diff.Left.Sort();
+            }
 
-            diff.Right = rightSet.Except(leftSet).ToList();
-            diff.Right.Sort();
+            if ((_config.Ignore & IgnoreFlags.Both) == 0)
+            {
+                diff.Both = leftSet.Intersect(rightSet).ToList();
+                diff.Both.Sort();
+            }
+
+            if ((_config.Ignore & IgnoreFlags.Right) == 0)
+            {
+                diff.Right = rightSet.Except(leftSet).ToList();
+                diff.Right.Sort();
+            }
 
             return diff;
         }

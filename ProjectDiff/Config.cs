@@ -1,7 +1,16 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace ProjectDiff
 {
+    [Flags]
+    public enum IgnoreFlags
+    {
+        Left = 1 << 0,
+        Right = 1 << 1,
+        Both = 1 << 2
+    }
+
     public class Target
     {
         public string ProjectPath;
@@ -19,5 +28,6 @@ namespace ProjectDiff
     public class Config
     {
         public List<Mapping> Mappings;
+        public IgnoreFlags Ignore;
     }
 }

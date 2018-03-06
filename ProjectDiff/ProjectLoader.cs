@@ -63,7 +63,8 @@ namespace ProjectDiff
 
         private string ResolveFilePath(string input)
         {
-            return BuildAbsolutePath(ResolveMacros(input));
+            //return BuildAbsolutePath(ResolveMacros(input));
+            return input;
         }
 
         private string ResolveMacros(string input)

@@ -5,11 +5,8 @@ namespace ProjectDiff
 {
     class DiffLogger
     {
-        private bool _ignoreBoth;
-
-        public DiffLogger(Diff diff, bool ignoreBoth = true)
+        public DiffLogger(Diff diff)
         {
-            _ignoreBoth = ignoreBoth;
             OutputDiff(diff);
         }
 
@@ -50,15 +47,17 @@ namespace ProjectDiff
         private void OutputStringsDiff(StringsDiff diff)
         {
             OutputDiffList("Left", diff.Left);
-            if (!_ignoreBoth)
-            {
-                OutputDiffList("Both", diff.Both);
-            }
+            OutputDiffList("Both", diff.Both);
             OutputDiffList("Right", diff.Right);
         }
 
         private void OutputDiffList(string name, List<string> list)
         {
+            if((list == null) || (list.Count == 0))
+            {
+                return;
+            }
+
             OutputHeader(3, name);
             OutputList(list);
         }

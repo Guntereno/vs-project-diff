@@ -31,6 +31,13 @@ namespace ProjectDiff
                 }
             }
 
+            XmlNode ignoreNode = doc.SelectSingleNode("//Global/Ignore");
+            if(ignoreNode != null)
+            {
+                string flags = ignoreNode.InnerText;
+                config.Ignore = (IgnoreFlags)Enum.Parse(typeof(IgnoreFlags), flags);
+            }
+
             Result = config;
         }
 
