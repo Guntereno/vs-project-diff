@@ -29,9 +29,17 @@ namespace ProjectDiff
             {
                 ProjectFileModel left = projects[mapping.Left.ProjectPath];
                 TargetModel leftTarget = left.FindTarget(mapping.Left.Config, mapping.Left.Platform);
+                if(leftTarget == null)
+                {
+                    throw new Exception("Target (" + mapping.Left.Config + "|" + mapping.Left.Platform + ") not found in " + left.Path + "!");
+                }
 
                 ProjectFileModel right = projects[mapping.Right.ProjectPath];
                 TargetModel rightTarget = right.FindTarget(mapping.Right.Config, mapping.Right.Platform);
+                if (rightTarget == null)
+                {
+                    throw new Exception("Target (" + mapping.Right.Config + "|" + mapping.Right.Platform + ") not found in " + right.Path + "!");
+                }
 
                 var diff = CreateDiff(leftTarget, rightTarget);
                 diff.Name = mapping.Name;

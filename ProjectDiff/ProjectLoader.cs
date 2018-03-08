@@ -141,51 +141,6 @@ namespace ProjectDiff
             }
         }
 
-        /*
-        private void LoadIncludes(XmlDocument doc)
-        {
-            foreach (TargetModel target in _result.Targets)
-            {
-                target.Includes = new List<string>();
-            }
-
-            var includes = doc.SelectNodes("//msb:Project/msb:ItemGroup/msb:ClInclude", _nsMan);
-            if (includes != null)
-            {
-                for (int i = 0; i < includes.Count; i++)
-                {
-                    XmlNode includeNode = includes[i];
-                    string path = includeNode.Attributes["Include"].Value;
-                    var exclusions = includeNode.SelectNodes("/msb:ExcludedFromBuild", _nsMan);
-
-                    foreach (TargetModel target in _result.Targets)
-                    {
-                        bool excluded = false;
-                        if (exclusions != null)
-                        {
-                            foreach (XmlNode exclusion in exclusions)
-                            {
-                                string condition = exclusion.Attributes["condition"].Value;
-                                TargetDef targetDef = GetTargetDefFromCondition(condition);
-                                if (targetDef == target.TargetDef)
-                                {
-                                    excluded = true;
-                                    break;
-                                }
-                            }
-                        }
-
-                        if (!excluded)
-                        {
-                            path = ResolveFilePath(path);
-                            target.Includes.Add(path);
-                        }
-                    }
-                }
-            }
-        }
-        */
-
         private string ResolveFilePath(string input)
         {
             input = input.Trim();
@@ -198,6 +153,11 @@ namespace ProjectDiff
             if ((_globalConfig.Paths & PathOperations.MakeAbsolute) != 0)
             {
                 input = BuildAbsolutePath(input);
+            }
+
+            if ((_globalConfig.Paths & PathOperations.FileNameOnly) != 0)
+            {
+                input = Path.GetFileName(input);
             }
 
             return input;
@@ -261,7 +221,10 @@ namespace ProjectDiff
                 itemDefGroupNode,
                 "msb:Link/msb:AdditionalLibraryDirectories",
                 ResolveFilePath);
-            result.AdditionalDependencies = BuildListFromNode(itemDefGroupNode, "msb:Link/msb:AdditionalDependencies");
+            result.AdditionalDependencies = BuildListFromNode(
+                itemDefGroupNode,
+                "msb:Link/msb:AdditionalDependencies",
+                ResolveFilePath);
 
             return result;
         }

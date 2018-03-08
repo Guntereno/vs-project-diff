@@ -16,7 +16,8 @@ namespace ProjectDiff
     {
         MakeAbsolute = 1 << 0,
         ResolveMacros = 1 << 1,
-        IgnoreCase = 1 << 2
+        IgnoreCase = 1 << 2,
+        FileNameOnly = 1 << 3
     }
 
     public class Target
